@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import * as THREE from 'three';
 
-export default function TransparentAstronautHero() {
+export default function StableSpaceHero() {
   const mountRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isVisible = useRef(true);
@@ -30,8 +30,8 @@ export default function TransparentAstronautHero() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2)); 
     mountRef.current.appendChild(renderer.domElement);
 
-    // Estrellas (Twinkle HD)
-    const starCount = 2500;
+    // Estrellas
+    const starCount = 2000;
     const starGeometry = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
@@ -47,18 +47,26 @@ export default function TransparentAstronautHero() {
     const starField = new THREE.Points(starGeometry, starMaterial);
     scene.add(starField);
 
-    // --- ASTRONAUTA CON TRANSPARENCIA REAL ---
+    // Astronauta
     const textureLoader = new THREE.TextureLoader();
-    // Usamos la versión procesada por el script
     const astronautTexture = textureLoader.load('/images/transparente_astronaut-final-v2.png', (tex) => {
       const aspect = tex.image.width / tex.image.height;
+      
+      // OPTIMIZACIÓN: Función de layout que solo cambia drásticamente si el ancho cambia mucho (evita tirones de barra de navegación)
+      let lastWidth = window.innerWidth;
+      
       const updateLayout = () => {
         const w = window.innerWidth;
+        // Si el cambio de ancho es mínimo (como el que causa la barra de herramientas), no re-escalamos bruscamente
+        if (Math.abs(w - lastWidth) < 50 && w < 768) return; 
+        
+        lastWidth = w;
         const isMobile = w < 768;
         const baseScale = isMobile ? 85 : 130; 
         astronaut.scale.set(baseScale * aspect, baseScale, 1);
         astronaut.position.set(isMobile ? 0 : 55, isMobile ? -5 : 5, 40);
       };
+      
       window.addEventListener('resize', updateLayout);
       updateLayout();
     });
@@ -66,8 +74,7 @@ export default function TransparentAstronautHero() {
     const astronautMaterial = new THREE.SpriteMaterial({ 
       map: astronautTexture,
       transparent: true,
-      opacity: 1,
-      // Usamos NormalBlending ahora que tenemos transparencia real en el PNG
+      opacity: 0.85, 
       blending: THREE.NormalBlending 
     });
     const astronaut = new THREE.Sprite(astronautMaterial);
@@ -85,25 +92,14 @@ export default function TransparentAstronautHero() {
       frameId = requestAnimationFrame(animate);
       if (!isVisible.current) return;
       starField.rotation.y += 0.0004;
-      
-      const time = Date.now() * 0.001;
-      astronaut.position.y += Math.sin(time) * 0.04;
+      astronaut.position.y += Math.sin(Date.now() * 0.001) * 0.04;
       astronaut.material.rotation = -mouse.x * 0.03;
-      
       renderer.render(scene, camera);
     };
     animate();
 
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('resize', handleResize);
       observer.disconnect();
       cancelAnimationFrame(frameId);
       if (mountRef.current?.contains(renderer.domElement)) mountRef.current.removeChild(renderer.domElement);
