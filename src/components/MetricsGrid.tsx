@@ -98,7 +98,7 @@ function MetricCard({ metric, index }: { metric: any, index: number }) {
 
 export default function MetricsGrid() {
   return (
-    <section className="py-32 px-6 relative z-10">
+    <section id="resultados" className="py-32 px-6 relative z-10">
       <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
