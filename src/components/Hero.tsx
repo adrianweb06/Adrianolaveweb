@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import * as THREE from 'three';
 
-export default function StableSpaceHero() {
+export default function SubtleSpaceHero() {
   const mountRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isVisible = useRef(true);
@@ -51,55 +51,46 @@ export default function StableSpaceHero() {
     const textureLoader = new THREE.TextureLoader();
     const astronautTexture = textureLoader.load('/images/transparente_astronaut-final-v2.png', (tex) => {
       const aspect = tex.image.width / tex.image.height;
-      
-      // OPTIMIZACIÓN: Función de layout que solo cambia drásticamente si el ancho cambia mucho (evita tirones de barra de navegación)
       let lastWidth = window.innerWidth;
       
-      const updateLayout = () => {
+      const updateLayout = (force = false) => {
         const w = window.innerWidth;
-        // Si el cambio de ancho es mínimo (como el que causa la barra de herramientas), no re-escalamos bruscamente
-        if (Math.abs(w - lastWidth) < 50 && w < 768) return; 
+        // Evitamos re-escalar por cambios mínimos (barra de navegación móvil)
+        if (!force && Math.abs(w - lastWidth) < 50 && w < 768) return; 
         
         lastWidth = w;
         const isMobile = w < 768;
-        const baseScale = isMobile ? 85 : 130; 
+        const baseScale = isMobile ? 100 : 130; 
         astronaut.scale.set(baseScale * aspect, baseScale, 1);
-        astronaut.position.set(isMobile ? 0 : 55, isMobile ? -5 : 5, 40);
+        astronaut.position.set(isMobile ? 0 : 55, isMobile ? 10 : 5, 40);
       };
       
-      window.addEventListener('resize', updateLayout);
-      updateLayout();
+      window.addEventListener('resize', () => updateLayout(false));
+      updateLayout(true); // Forzamos el primer render
     });
 
     const astronautMaterial = new THREE.SpriteMaterial({ 
       map: astronautTexture,
       transparent: true,
-      opacity: 0.85, 
+      // AJUSTE DE OPACIDAD: 0.4 para que sea muy sutil y no tape nada
+      opacity: 0.4, 
       blending: THREE.NormalBlending 
     });
     const astronaut = new THREE.Sprite(astronautMaterial);
     scene.add(astronaut);
 
     let frameId: number;
-    const mouse = { x: 0, y: 0 };
-    const onMouseMove = (e: MouseEvent) => {
-      mouse.x = (e.clientX - window.innerWidth / 2) / 100;
-      mouse.y = (e.clientY - window.innerHeight / 2) / 100;
-    };
-    window.addEventListener('mousemove', onMouseMove);
-
     const animate = () => {
       frameId = requestAnimationFrame(animate);
       if (!isVisible.current) return;
       starField.rotation.y += 0.0004;
       astronaut.position.y += Math.sin(Date.now() * 0.001) * 0.04;
-      astronaut.material.rotation = -mouse.x * 0.03;
       renderer.render(scene, camera);
     };
     animate();
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('resize', () => {});
       observer.disconnect();
       cancelAnimationFrame(frameId);
       if (mountRef.current?.contains(renderer.domElement)) mountRef.current.removeChild(renderer.domElement);
@@ -121,11 +112,8 @@ export default function StableSpaceHero() {
             </span>
           </motion.div>
 
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="text-7xl md:text-8xl font-black text-white leading-[0.8] tracking-tighter mb-8 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
-          >
-            ADRIÁN <br /> <span className="gradient-text drop-shadow-[0_0_40px_rgba(0,240,255,0.4)] uppercase">OLAVE</span>
+          <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-7xl md:text-9xl font-black text-white leading-[0.8] tracking-tighter mb-8 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] uppercase">
+            ADRIÁN <br /> <span className="gradient-text drop-shadow-[0_0_40px_rgba(0,240,255,0.4)]">OLAVE</span>
           </motion.h1>
 
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-lg md:text-xl text-gray-200 font-light leading-relaxed mb-12 max-w-xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
