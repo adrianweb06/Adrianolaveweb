@@ -60,7 +60,7 @@ export default function SubtleSpaceHero() {
         
         lastWidth = w;
         const isMobile = w < 768;
-        const baseScale = isMobile ? 100 : 130; 
+        const baseScale = isMobile ? 85 : 130; 
         astronaut.scale.set(baseScale * aspect, baseScale, 1);
         astronaut.position.set(isMobile ? 0 : 55, isMobile ? 10 : 5, 40);
       };
